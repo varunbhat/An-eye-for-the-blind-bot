@@ -29,72 +29,63 @@ class Centerify:
         cv.NamedWindow('threshed', cv.CV_WINDOW_AUTOSIZE)
         cv.NamedWindow('cropped', cv.CV_WINDOW_AUTOSIZE)
 
-
-
-        positions_x, positions_y = [0]*self.SMOOTHNESS, [0]*self.SMOOTHNESS 
-
-
         while 1:    
             image = cv.QueryFrame(capture)
-        #    image = cv.LoadImage("2012_automata.jpg")
+#            image = cv.LoadImage("2012_automata.jpg")
             if not image:
                 break
         
-        #    Blurring image
+#/////////////////////////////////////////////////////
+#            Blurring my image and doing stuff
             image_smoothed = cv.CloneImage(image)
             cv.Smooth(image, image_smoothed, cv.CV_GAUSSIAN, 1)
-        
-        
             image_threshed = self.thresholded_image(image_smoothed)
-            
             cv.Dilate(image_threshed, image_threshed, None, 3)
             cv.Erode(image_threshed, image_threshed, None, 3)
-        
-            blobContour = None
-        
-        #    Contour Finding !!!!!!!!!Main Algo!!!!!!!!
+#///////////////////////////////////////////////////////
+#            Get the Contours
             current_contour = cv.FindContours(cv.CloneImage(image_threshed), cv.CreateMemStorage(), cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
-            #just making an outline
-            cv.DrawContours(image, current_contour,(0,0,255),(0,100,100),4)
-        
+            object_position=()
             if len(current_contour) != 0:
-        
-                largest_contour = current_contour
-                while True:
-                    current_contour = current_contour.h_next()
-                    if (not current_contour):
-                        break
-                    if (cv.ContourArea(current_contour) > cv.ContourArea(largest_contour)):
-                        largest_contour = current_contour
-        
-        
-                # if we got a good enough blob
-                if cv.ContourArea(largest_contour)>2.0:
-                    blobContour = largest_contour
-                    # find the center of the blob
-                    moments = cv.Moments(largest_contour, 1)
-                    positions_x.append(cv.GetSpatialMoment(moments, 1, 0)/cv.GetSpatialMoment(moments, 0, 0))
-                    positions_y.append(cv.GetSpatialMoment(moments, 0, 1)/cv.GetSpatialMoment(moments, 0, 0))
-                    # discard all but the last N positions
-                    positions_x, positions_y = positions_x[-self.SMOOTHNESS:], positions_y[-self.SMOOTHNESS:]
-                    cv.DrawContours(image_threshed, largest_contour, cv.RGB(60, 60, 60), cv.RGB(60, 60, 60),1,-1)
-            
-            object_indicator = cv.CreateImage(cv.GetSize(image), image.depth, 3)
+                object_position =  self.contourCenter(self.largestContour(current_contour))
 
-            pos_x = (sum(positions_x)/len(positions_x))
-            pos_y = (sum(positions_y)/len(positions_y))
-            object_position = (int(pos_x),int(pos_y))
-
-
-            cv.Circle(object_indicator, object_position, 12, (0,0,255), 4)
-
-            cropped = cv.CreateImage((image_threshed.width,image_threshed.height), image_threshed.depth, image_threshed.nChannels)
-            src_region = cv.GetSubRect(image_threshed, (0,int(pos_y)-(2/100),image_threshed.width,image_threshed.height*3/100))
-            cv.Add(image, object_indicator, image)
+#            cropped = cv.CreateImage((image_threshed.width,image_threshed.height), image_threshed.depth, image_threshed.nChannels)
+            print object_position
+            src_region = cv.GetSubRect(image_threshed, (0,object_position[1]-(2/100),image_threshed.width,image_threshed.height*3/100))
+            image = self.drawPointOnImage(image, object_position)
             cv.ShowImage('threshed', image_threshed)
             cv.ShowImage('camera', image)
             cv.ShowImage('cropped', src_region)
             c = cv.WaitKey(10)
             if c != -1:
                 break
+    
+    def contourCenter(self,thisContour,smoothness=4): 
+        positions_x, positions_y = [0]*smoothness, [0]*smoothness 
+#        print type(thisContour)
+        if cv.ContourArea(thisContour)>2.0:
+            moments = cv.Moments(thisContour, 1)
+            positions_x.append(cv.GetSpatialMoment(moments, 1, 0)/cv.GetSpatialMoment(moments, 0, 0))
+            positions_y.append(cv.GetSpatialMoment(moments, 0, 1)/cv.GetSpatialMoment(moments, 0, 0))
+            positions_x, positions_y = positions_x[-self.SMOOTHNESS:], positions_y[-self.SMOOTHNESS:]
+            pos_x = (sum(positions_x)/len(positions_x))
+            pos_y = (sum(positions_y)/len(positions_y))
+            return (int(pos_x*smoothness),int(pos_y*smoothness))
+        
+    def largestContour(self,contourCluster):
+        if len(contourCluster) != 0:
+            largest_contour = contourCluster
+            while True:
+                contourCluster = contourCluster.h_next()
+                if (not contourCluster):
+#                    print type(largest_contour)
+                    return largest_contour
+#                    break
+                if (cv.ContourArea(contourCluster) > cv.ContourArea(largest_contour)):
+                    largest_contour = contourCluster
 
+    def drawPointOnImage(self,img,object_position):
+        object_indicator = cv.CreateImage(cv.GetSize(img), img.depth, 3)
+        cv.Circle(object_indicator, object_position, 12, (0,0,255), 4)
+        cv.Add(img, object_indicator, img)
+        return img
