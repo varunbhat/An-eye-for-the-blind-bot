@@ -41,11 +41,17 @@ if not capture:
     exit(1)
 
 
+cv.NamedWindow('camera feed', cv.CV_WINDOW_AUTOSIZE)
+cv.NamedWindow('filtered feed', cv.CV_WINDOW_AUTOSIZE)
+
+
+
+
+
 cv.NamedWindow('camera', cv.CV_WINDOW_AUTOSIZE)
 cv.NamedWindow('threshed', cv.CV_WINDOW_AUTOSIZE)
 cv.NamedWindow('cropped', cv.CV_WINDOW_AUTOSIZE)
-cv.NamedWindow('camera feed', cv.CV_WINDOW_AUTOSIZE)
-cv.NamedWindow('filtered feed', cv.CV_WINDOW_AUTOSIZE)
+
 
 # initialize position array
 positions_x, positions_y = [0]*SMOOTHNESS, [0]*SMOOTHNESS
