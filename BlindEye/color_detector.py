@@ -50,6 +50,7 @@ class colorThresholdDetector:
             c = cv.WaitKey(1)
             if c == 27 or c == 1048603:
                 print (thresh_min,thresh_max)
+                return (thresh_min,thresh_max)
                 
                 break
             elif c == -1:

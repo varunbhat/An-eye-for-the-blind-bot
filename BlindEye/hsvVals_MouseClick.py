@@ -14,8 +14,7 @@ class hsvVals_MouseClick:
         
         
         font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.5, 1, 0, 2, 8)
-        
-        
+
         while True:
             src = cv.QueryFrame(capture)
 #            src = cv.LoadImage('2012_automata.jpg')
