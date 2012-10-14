@@ -8,7 +8,7 @@ class Centerify:
         self.SMOOTHNESS = 4
         self.MIN_THRESH =mint
         self.MAX_THRESH =maxt
-        self.doStuff()
+#        self.doStuff()
 
     def thresholded_image(self,image):
         image_hsv = cv.CreateImage(cv.GetSize(image), image.depth, 3)
@@ -45,19 +45,24 @@ class Centerify:
 #///////////////////////////////////////////////////////
 #            Get the Contours
             current_contour = cv.FindContours(cv.CloneImage(image_threshed), cv.CreateMemStorage(), cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
-            object_position=()
+            object_position=(0,0)
             if len(current_contour) != 0:
                 object_position =  self.contourCenter(self.largestContour(current_contour))
 
 #            cropped = cv.CreateImage((image_threshed.width,image_threshed.height), image_threshed.depth, image_threshed.nChannels)
-            print object_position
-            src_region = cv.GetSubRect(image_threshed, (0,object_position[1]-(2/100),image_threshed.width,image_threshed.height*3/100))
+#            print object_position
+            try:
+                src_region = cv.GetSubRect(image_threshed, (0,object_position[1]-(2/100),image_threshed.width,image_threshed.height*3/100))
+            except:
+                src_region = cv.GetSubRect(image_threshed, (0,0,image_threshed.width,image_threshed.height*5/100))
             image = self.drawPointOnImage(image, object_position)
+            image = self.getSlicedCenter(src_region, image)
             cv.ShowImage('threshed', image_threshed)
             cv.ShowImage('camera', image)
             cv.ShowImage('cropped', src_region)
             c = cv.WaitKey(10)
             if c != -1:
+#                return src_region
                 break
     
     def contourCenter(self,thisContour,smoothness=4): 
@@ -85,7 +90,31 @@ class Centerify:
                     largest_contour = contourCluster
 
     def drawPointOnImage(self,img,object_position):
-        object_indicator = cv.CreateImage(cv.GetSize(img), img.depth, 3)
-        cv.Circle(object_indicator, object_position, 12, (0,0,255), 4)
-        cv.Add(img, object_indicator, img)
+        try:
+            object_indicator = cv.CreateImage(cv.GetSize(img), img.depth, 3)
+            cv.Circle(object_indicator, object_position, 12, (0,0,255), 4)
+            cv.Add(img, object_indicator, img)
+        except:
+            pass
+#            object_indicator = cv.CreateImage(cv.GetSize(img), img.depth, 1)
+#            cv.Circle(object_indicator, object_position, 12, (0), 4)
+#            cv.Add(img, object_indicator, img)
         return img
+    def getContour(self,image):
+        current_contour = cv.FindContours(cv.CloneImage(image), cv.CreateMemStorage(), cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
+        return  current_contour
+    def getSlicedCenter(self,src_region,image):
+        centers = []
+#        src_region = cv.iplimage(src_region)
+        contourx = cv.FindContours(src_region, cv.CreateMemStorage(), cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
+#        print len(contourx)
+        if cv.ContourArea(contourx)> 2:
+            for i in range(len(contourx)):
+                if contourx:
+                    centers.append(self.contourCenter(contourx, 4))
+                    contourx = contourx.h_next()
+
+            for i in range(len(centers)):
+                self.drawPointOnImage(image, centers[i])
+            print centers
+        return image
