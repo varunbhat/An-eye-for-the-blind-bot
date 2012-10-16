@@ -27,7 +27,7 @@ class Centerify:
 
         cv.NamedWindow('camera', cv.CV_WINDOW_AUTOSIZE)
         cv.NamedWindow('threshed', cv.CV_WINDOW_AUTOSIZE)
-        cv.NamedWindow('cropped', cv.CV_WINDOW_AUTOSIZE)
+#        cv.NamedWindow('cropped', cv.CV_WINDOW_AUTOSIZE)
 
         while 1:    
             image = cv.QueryFrame(capture)
@@ -51,15 +51,17 @@ class Centerify:
 
 #            cropped = cv.CreateImage((image_threshed.width,image_threshed.height), image_threshed.depth, image_threshed.nChannels)
 #            print object_position
-            try:
-                src_region = cv.GetSubRect(image_threshed, (0,object_position[1]-(2/100),image_threshed.width,image_threshed.height*3/100))
-            except:
-                src_region = cv.GetSubRect(image_threshed, (0,0,image_threshed.width,image_threshed.height*5/100))
+#            try:
+#                src_region = cv.GetSubRect(image_threshed, (0,object_position[1]-(2/100),image_threshed.width,image_threshed.height*3/100))
+#            except:
+#                src_region = cv.GetSubRect(image_threshed, (0,0,image_threshed.width,image_threshed.height*5/100))
             image = self.drawPointOnImage(image, object_position)
-            image = self.getSlicedCenter(src_region, image)
+#            image = self.getSlicedCenter(src_region, image)
+            image = self.getSlicedCenter(image_threshed, image)
             cv.ShowImage('threshed', image_threshed)
             cv.ShowImage('camera', image)
-            cv.ShowImage('cropped', src_region)
+            
+#            cv.ShowImage('cropped', src_region)
             c = cv.WaitKey(10)
             if c != -1:
 #                return src_region
@@ -117,4 +119,11 @@ class Centerify:
             for i in range(len(centers)):
                 self.drawPointOnImage(image, centers[i])
             print centers
+            image = self.pointTheBlackAndWhite(image,centers)
+        return image
+    
+#    def aimAtThePoint(self):
+    def pointTheBlackAndWhite(self,image,centers):
+        for i in centers:
+            image = self.drawPointOnImage(image, i)
         return image
